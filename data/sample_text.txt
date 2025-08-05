@@ -1,0 +1,13 @@
+This is a sample text document for testing the RAG system.
+It contains information about artificial intelligence and machine learning.
+
+Artificial Intelligence (AI) is a broad field of computer science focused on creating systems capable of performing tasks that typically require human intelligence. Machine Learning (ML) is a subset of AI that enables systems to automatically learn and improve from experience without being explicitly programmed.
+
+Key concepts in AI/ML include:
+- Neural Networks: Computing systems inspired by biological neural networks
+- Deep Learning: ML techniques using neural networks with multiple layers
+- Natural Language Processing: AI's ability to understand and generate human language
+- Computer Vision: AI's capability to interpret and understand visual information
+- Reinforcement Learning: Learning through interaction with an environment
+
+The combination of these technologies enables powerful applications like chatbots, recommendation systems, autonomous vehicles, and medical diagnosis tools.

@@ -1,0 +1,72 @@
+[
+  {
+    "question": "What is Retrieval-Augmented Generation (RAG)?",
+    "answer": "Retrieval-Augmented Generation (RAG) is a technique that combines the power of large language models with external knowledge retrieval. Instead of relying solely on the model's training data, RAG systems first retrieve relevant documents from a knowledge base and then use this information to generate more accurate and contextually relevant responses. This approach helps reduce hallucinations and provides more up-to-date information.",
+    "source": "AI Research Papers",
+    "category": "RAG",
+    "difficulty": "beginner"
+  },
+  {
+    "question": "How does ChromaDB work as a vector database?",
+    "answer": "ChromaDB is an open-source vector database designed for storing and querying high-dimensional embeddings. It works by converting text and other data into vector representations using embedding models, then storing these vectors in an optimized format for similarity search. When you query ChromaDB, it finds the most similar vectors using distance metrics like cosine similarity or Euclidean distance. ChromaDB supports persistence, metadata filtering, and can handle large-scale vector collections efficiently.",
+    "source": "ChromaDB Documentation",
+    "category": "Vector Databases",
+    "difficulty": "intermediate"
+  },
+  {
+    "question": "What are the benefits of using LangChain for RAG pipelines?",
+    "answer": "LangChain provides several benefits for building RAG pipelines: 1) Modular components that can be easily combined and customized, 2) Built-in integrations with popular vector databases and LLMs, 3) Document loaders for various file formats (PDF, web pages, etc.), 4) Text splitters for optimal chunking strategies, 5) Memory management for conversational AI, 6) Chains and agents for complex reasoning workflows, and 7) Evaluation tools for measuring RAG performance. This makes it easier to build, test, and deploy production-ready RAG systems.",
+    "source": "LangChain Documentation",
+    "category": "RAG Frameworks",
+    "difficulty": "intermediate"
+  },
+  {
+    "question": "Explain the role of embeddings in RAG systems",
+    "answer": "Embeddings are vector representations of text that capture semantic meaning in high-dimensional space. In RAG systems, embeddings serve multiple crucial roles: 1) Document encoding - converting knowledge base documents into searchable vectors, 2) Query encoding - transforming user questions into the same vector space, 3) Similarity matching - enabling fast retrieval of relevant documents through vector similarity, 4) Semantic understanding - allowing the system to find conceptually related content even when exact keywords don't match. The quality of embeddings directly impacts RAG performance, making model selection critical.",
+    "source": "NLP Research",
+    "category": "Embeddings",
+    "difficulty": "intermediate"
+  },
+  {
+    "question": "How do you evaluate RAG system performance?",
+    "answer": "RAG system evaluation involves multiple metrics across different dimensions: 1) Retrieval metrics - measuring how well the system finds relevant documents (precision@k, recall@k, NDCG), 2) Generation metrics - assessing answer quality (BLEU, ROUGE, human evaluation), 3) End-to-end metrics - evaluating overall system performance (accuracy, helpfulness, truthfulness), 4) Faithfulness - ensuring answers are grounded in retrieved documents, 5) Relevance - measuring how well retrieved documents match the query, and 6) Latency and throughput for production deployment. A/B testing with human evaluators often provides the most reliable assessment.",
+    "source": "RAG Evaluation Research",
+    "category": "Evaluation",
+    "difficulty": "advanced"
+  },
+  {
+    "question": "What is the difference between fine-tuning and RAG?",
+    "answer": "Fine-tuning and RAG are two different approaches to customizing language models: Fine-tuning involves training a pre-trained model on domain-specific data, updating the model's parameters to specialize it for particular tasks or knowledge areas. This creates a static knowledge base within the model. RAG, on the other hand, keeps the base model unchanged and instead retrieves relevant information from an external knowledge base at inference time. RAG offers advantages like real-time knowledge updates, transparency in sources, and lower computational costs for adding new information, while fine-tuning can provide more seamless integration of domain knowledge.",
+    "source": "Machine Learning Best Practices",
+    "category": "Model Customization",
+    "difficulty": "intermediate"
+  },
+  {
+    "question": "What are common challenges in implementing RAG systems?",
+    "answer": "Common RAG implementation challenges include: 1) Chunking strategy - determining optimal document splitting for retrieval and context, 2) Embedding model selection - balancing quality, speed, and domain relevance, 3) Retrieval quality - ensuring relevant documents are found consistently, 4) Context window management - fitting retrieved content within model limits, 5) Hallucination control - preventing the model from generating information not in retrieved documents, 6) Latency optimization - maintaining fast response times, 7) Evaluation complexity - measuring system performance across multiple dimensions, and 8) Knowledge base maintenance - keeping information current and handling conflicting sources.",
+    "source": "RAG Implementation Guide",
+    "category": "Implementation",
+    "difficulty": "advanced"
+  },
+  {
+    "question": "How does LlamaIndex differ from other RAG frameworks?",
+    "answer": "LlamaIndex (formerly GPT Index) is specifically designed for building RAG applications with several distinctive features: 1) Data connectors for 100+ data sources (APIs, PDFs, databases), 2) Advanced indexing structures (tree, keyword, knowledge graph indices), 3) Query engines with sophisticated routing and sub-question capabilities, 4) Built-in evaluation and observability tools, 5) Strong focus on production deployment with async support, 6) Tight integration with LLM providers and vector databases, and 7) Comprehensive data ingestion pipeline management. While LangChain is more general-purpose for LLM applications, LlamaIndex specializes in the data ingestion and retrieval aspects of RAG systems.",
+    "source": "LlamaIndex Documentation",
+    "category": "RAG Frameworks",
+    "difficulty": "intermediate"
+  },
+  {
+    "question": "What are vector similarity search algorithms?",
+    "answer": "Vector similarity search algorithms are methods for finding the most similar vectors in high-dimensional space. Key algorithms include: 1) Exact search - brute force comparison using metrics like cosine similarity, Euclidean distance, or dot product, 2) Approximate Nearest Neighbor (ANN) - faster algorithms like LSH (Locality Sensitive Hashing), 3) HNSW (Hierarchical Navigable Small World) - graph-based approach offering good speed-accuracy tradeoffs, 4) IVF (Inverted File) - clustering-based method for large-scale search, and 5) Product Quantization - compression technique for memory efficiency. The choice depends on requirements for speed, accuracy, memory usage, and dataset size.",
+    "source": "Information Retrieval Research",
+    "category": "Vector Search",
+    "difficulty": "advanced"
+  },
+  {
+    "question": "How do you handle multi-modal data in RAG systems?",
+    "answer": "Multi-modal RAG systems can process text, images, audio, and other data types: 1) Multi-modal embeddings - using models that can encode different data types into a shared vector space, 2) Modality-specific processing - separate pipelines for each data type before fusion, 3) Cross-modal retrieval - finding relevant content across different modalities, 4) Multi-modal generation - producing responses that may include text, images, or other formats, 5) Metadata utilization - leveraging structured information about multimedia content, and 6) Fusion strategies - combining information from multiple modalities effectively. Tools like CLIP for text-image understanding and specialized multi-modal embedding models enable these capabilities.",
+    "source": "Multi-modal AI Research",
+    "category": "Multi-modal RAG",
+    "difficulty": "advanced"
+  }
+]
