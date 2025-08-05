@@ -205,3 +205,66 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+.vscode/
+
+# Project-specific ignores
+# Data directories
+data/chromadb/
+data/*.db
+data/*.sqlite
+data/downloads/
+data/processed/
+data/temp/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Model cache and downloads
+models/
+.cache/
+huggingface_cache/
+transformers_cache/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Docker
+.dockerignore
+
+# Streamlit
+.streamlit/
+
+# ChromaDB specific
+chroma.sqlite3
+
+# Pre-commit
+.pre-commit-config.yaml.bak
+
+# Local configuration overrides
+local_config.yaml
+local_settings.py
+
+# Development databases
+dev.db
+test.db
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.#*
+\#*#
+
+# Local development
+local/
+dev/
