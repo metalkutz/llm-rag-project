@@ -268,3 +268,5 @@ test.db
 # Local development
 local/
 dev/
+* copy*
+*copy*

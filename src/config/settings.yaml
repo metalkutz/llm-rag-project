@@ -1,0 +1,7 @@
+# RAG Microservice Configuration
+
+# Vector Store Configuration
+vector_store:
+  type: "chromadb"
+  persist_directory: "data/chromadb"
+  collection_name: "rag_documents"
