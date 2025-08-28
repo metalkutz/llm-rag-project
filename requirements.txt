@@ -20,9 +20,19 @@ chromadb>=0.4.24,<0.6.0          # Compatible range for llama-index-vector-store
 sentence-transformers>=2.6.1,<3.0.0
 transformers>=4.37.0,<5.0.0
 torch>=2.2.0,<3.0.0
+accelerate==0.25.0
+tokenizers==0.15.0
+
+# PDF Processing
+PyPDF2==3.0.1
+PyMuPDF==1.23.8
 
 # UI and utilities
+numpy==1.26.4
+pandas==2.3.1
+aiofiles==24.1.0
 streamlit==1.29.0
+streamlit-chat==0.1.1
 requests>=2.31.0
 
 # Configuration and utilities
