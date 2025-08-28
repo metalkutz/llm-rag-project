@@ -2,14 +2,12 @@
 Configuration management for the RAG microservice.
 """
 
-import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 import yaml
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
-
 
 class VectorStoreConfig(BaseModel):
     """Vector store configuration."""
@@ -23,12 +21,59 @@ class VectorStoreConfig(BaseModel):
         description="Collection name"
     )
 
+class EmbeddingConfig(BaseModel):
+    """Embedding model configuration."""
+    model_name: str = Field(
+        default="all-MiniLM-L6-v2",
+        description="Sentence transformer model name"
+    )
+    device: str = Field(default="cpu", description="Device to run model on")
+    batch_size: int = Field(default=32, description="Batch size for embeddings")
+
+class LLMConfig(BaseModel):
+    """Language model configuration."""
+    model_name: str = Field(
+        default="microsoft/DialoGPT-medium",
+        description="Hugging Face model name"
+    )
+    max_new_tokens: int = Field(default=256, description="Maximum new tokens")
+    temperature: float = Field(default=0.2, description="Generation temperature")
+    top_p: float = Field(default=0.9, description="Top-p sampling")
+    device: str = Field(default="cpu", description="Device to run model on")
+
+class DocumentProcessingConfig(BaseModel):
+    """Document processing configuration."""
+    chunk_size: int = Field(default=512, description="Text chunk size")
+    chunk_overlap: int = Field(default=50, description="Chunk overlap size")
+    max_documents: int = Field(default=1000, description="Maximum documents to process")
+
+class RetrievalConfig(BaseModel):
+    """Retrieval configuration."""
+    top_k: int = Field(default=3, description="Number of documents to retrieve")
+    similarity_threshold: float = Field(
+        default=0.5,
+        description="Similarity threshold for retrieval"
+    )
+
+class LoggingConfig(BaseModel):
+    """Logging configuration."""
+    level: str = Field(default="INFO", description="Logging level")
+    format: str = Field(
+        default="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
+        description="Log format"
+    )
+    file: Optional[str] = Field(default=None, description="Log file path")
+
 class Settings(BaseSettings):
     """Main settings class."""
-
     # Component configurations
     vector_store: VectorStoreConfig = Field(default_factory=VectorStoreConfig)
-    
+    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    document_processing: DocumentProcessingConfig = Field(default_factory=DocumentProcessingConfig)
+    retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+
     # Environment
     environment: str = Field(default="development", description="Environment name")
     debug: bool = Field(default=False, description="Debug mode")
@@ -39,7 +84,6 @@ class Settings(BaseSettings):
         case_sensitive = False
         env_nested_delimiter = "__"
 
-
 def load_yaml_config(config_path: str) -> Dict[str, Any]:
     """Load configuration from YAML file."""
     config_file = Path(config_path)
@@ -49,10 +93,8 @@ def load_yaml_config(config_path: str) -> Dict[str, Any]:
     with open(config_file, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f) or {}
 
-
 # Global settings instance
 _settings: Optional[Settings] = None
-
 
 def get_settings(config_path: str = "src/config/settings.yaml") -> Settings:
     """Get global settings instance."""

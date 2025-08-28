@@ -5,3 +5,28 @@ vector_store:
   type: "chromadb"
   persist_directory: "data/chromadb"
   collection_name: "rag_documents"
+
+# Embedding Model Configuration
+embedding:
+  model_name: "all-MiniLM-L6-v2"
+  device: "cpu"
+  batch_size: 32
+
+# Language Model Configuration
+llm:
+  model_name: "gpt2"
+  max_new_tokens: 64  # Much smaller to prevent repetition
+  temperature: 0.7
+  top_p: 0.9
+  device: "cpu"
+
+# Document Processing Configuration
+document_processing:
+  chunk_size: 512
+  chunk_overlap: 50
+  max_documents: 1000
+
+# Retrieval Configuration
+retrieval:
+  top_k: 3
+  similarity_threshold: 0.5
