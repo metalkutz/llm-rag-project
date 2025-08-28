@@ -7,12 +7,15 @@ import json
 import sys
 from pathlib import Path
 from typing import List # Dict, Any
+import hashlib
+import os
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
 from loguru import logger
 from llama_index.core import Document
+from scripts.import_pdf import PDFProcessor
 
 from src.config.config import get_settings
 from src.rag.pipeline import RAGPipeline
@@ -79,6 +82,44 @@ async def load_documents_from_json(file_path: str) -> List[Document]:
         raise
 
 
+async def load_documents_from_pdf(file_path: str) -> List[Document]:
+    """Load documents from PDF file."""
+    try:
+        logger.info(f"Loading document from PDF: {file_path}")
+        
+        # Initialize PDF processor
+        pdf_processor = PDFProcessor()
+        
+        # Get file name for metadata
+        filename = Path(file_path).name
+        
+        # Process the PDF file
+        processed_doc = pdf_processor.process_pdf(file_path, filename)
+        
+        # Create a single document from the entire PDF
+        doc = Document(
+            text=processed_doc['text'],
+            metadata={
+                "source": filename,
+                "type": "pdf",
+                "category": "document",
+                "file_size": processed_doc['size'],
+                "upload_date": processed_doc['upload_date'].isoformat(),
+                "word_count": processed_doc['word_count'],
+                "original_doc_id": processed_doc['id']
+            },
+            doc_id=f"pdf_{processed_doc['id']}"
+        )
+        
+        logger.info(f"Loaded PDF document {filename} with {processed_doc['word_count']} words")
+        
+        return [doc]
+        
+    except Exception as e:
+        logger.error(f"Failed to load documents from PDF {file_path}: {e}")
+        raise
+
+
 async def ingest_data():
     """Ingest sample data into the RAG system."""
     try:
@@ -104,8 +145,16 @@ async def ingest_data():
             "data/combined_documents.json"
         ]
         
+        # List of PDF files to ingest
+        pdf_files = [
+            "data/Ficha técnica Environment ISR.pdf",
+            "data/Posicionamiento_Environment.pdf",
+            "data/Tarifas transferencias Extranjero.pdf"
+        ]
+        
         total_ingested = 0
         
+        # Process JSON files
         for data_file in data_files:
             file_path = Path(data_file)
             
@@ -128,6 +177,31 @@ async def ingest_data():
                 
             except Exception as e:
                 logger.error(f"Failed to ingest {file_path}: {e}")
+                continue
+        
+        # Process PDF files
+        for pdf_file in pdf_files:
+            file_path = Path(pdf_file)
+            
+            if not file_path.exists():
+                logger.warning(f"PDF file not found: {file_path}")
+                continue
+            
+            try:
+                # Load documents from PDF file
+                documents = await load_documents_from_pdf(str(file_path))
+                
+                if documents:
+                    # Ingest documents
+                    logger.info(f"Ingesting {len(documents)} document from {file_path.name}")
+                    await rag_pipeline.ingest_documents(documents)
+                    total_ingested += len(documents)
+                    logger.info(f"Successfully ingested {len(documents)} document from PDF")
+                else:
+                    logger.warning(f"No documents found in PDF {file_path}")
+                
+            except Exception as e:
+                logger.error(f"Failed to ingest PDF {file_path}: {e}")
                 continue
         
         # Get final stats
@@ -167,6 +241,23 @@ def main():
         print(f"Missing required data files: {missing_files}")
         print("Please run 'python scripts/download_data.py' first to create sample data.")
         sys.exit(1)
+    
+    # Check for PDF files (optional)
+    pdf_files = [
+        "data/Ficha técnica Environment ISR.pdf",
+        "data/Posicionamiento_Environment.pdf", 
+        "data/Tarifas transferencias Extranjero.pdf"
+    ]
+    
+    available_pdfs = []
+    for pdf_file in pdf_files:
+        if Path(pdf_file).exists():
+            available_pdfs.append(pdf_file)
+    
+    if available_pdfs:
+        print(f"Found {len(available_pdfs)} PDF files to process: {[Path(p).name for p in available_pdfs]}")
+    else:
+        print("No PDF files found in data directory. Only JSON files will be processed.")
     
     # Run ingestion
     result = asyncio.run(ingest_data())

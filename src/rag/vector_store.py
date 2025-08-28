@@ -104,3 +104,41 @@ class ChromaVectorStore:
         except Exception as e:
             logger.error(f"Failed to get stats: {e}")
             return {"error": str(e)}
+
+    async def delete_collection(self) -> None:
+        """Delete the entire collection."""
+        try:
+            if self.client is not None and self.collection is not None:
+                self.client.delete_collection(self.collection.name)
+                logger.info(f"Deleted collection: {self.collection.name}")
+                self.collection = None
+                self.llama_index_vector_store = None
+            else:
+                logger.warning("Cannot delete collection: client or collection is None")
+        except Exception as e:
+            logger.error(f"Failed to delete collection: {e}")
+            raise
+
+# import asyncio
+
+# if __name__ == "__main__":
+#     settings = Settings()
+#     vector_store = ChromaVectorStore(settings)
+
+#     async def main():
+#         try:
+#             # Initialize the vector store first
+#             await vector_store.initialize()
+#             await vector_store.delete_collection()
+#             logger.info("Collection deleted successfully")
+#         except Exception as e:
+#             logger.error(f"Failed to delete collection: {e}")
+#             raise
+
+#     try:
+#         asyncio.run(main())
+#     except KeyboardInterrupt:
+#         logger.info("Operation cancelled by user")
+#     except Exception as e:
+#         logger.error(f"Unexpected error: {e}")
+#         exit(1)
