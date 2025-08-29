@@ -6,12 +6,16 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from pydantic_settings import BaseSettings
 
 class VectorStoreConfig(BaseModel):
     """Vector store configuration."""
-    type: str = Field(default="chromadb", description="Vector store type")
+    model_config = ConfigDict(extra="ignore")
+    type: str = Field(
+        default="chromadb", 
+        description="Vector store type"
+    )
     persist_directory: str = Field(
         default="data/chromadb",
         description="Directory to persist vector store"
@@ -23,41 +27,108 @@ class VectorStoreConfig(BaseModel):
 
 class EmbeddingConfig(BaseModel):
     """Embedding model configuration."""
+    model_config = ConfigDict(extra="ignore")
     model_name: str = Field(
         default="all-MiniLM-L6-v2",
         description="Sentence transformer model name"
     )
-    device: str = Field(default="cpu", description="Device to run model on")
-    batch_size: int = Field(default=32, description="Batch size for embeddings")
+    device: str = Field(
+        default="cpu", 
+        description="Device to run model on"
+        )
+    batch_size: int = Field(
+        default=32, 
+        description="Batch size for embeddings"
+        )
 
 class LLMConfig(BaseModel):
     """Language model configuration."""
+    model_config = ConfigDict(extra="ignore")
     model_name: str = Field(
         default="microsoft/DialoGPT-medium",
         description="Hugging Face model name"
     )
-    max_new_tokens: int = Field(default=256, description="Maximum new tokens")
-    temperature: float = Field(default=0.2, description="Generation temperature")
-    top_p: float = Field(default=0.9, description="Top-p sampling")
-    device: str = Field(default="cpu", description="Device to run model on")
+    max_new_tokens: int = Field(
+        default=256, 
+        description="Maximum new tokens"
+    )
+    temperature: float = Field(
+        default=0.7, 
+        description="Generation temperature"
+    )
+    top_p: float = Field(
+        default=0.9, 
+        description="Top-p sampling"
+    )
+    device: str = Field(
+        default="cpu", 
+        description="Device to run model on"
+    )
+    trust_remote_code: bool = Field(
+        default=False,
+        description="Allow loading remote code for custom models"
+    )
 
 class DocumentProcessingConfig(BaseModel):
     """Document processing configuration."""
+    model_config = ConfigDict(extra="ignore")
     chunk_size: int = Field(default=512, description="Text chunk size")
     chunk_overlap: int = Field(default=50, description="Chunk overlap size")
     max_documents: int = Field(default=1000, description="Maximum documents to process")
 
 class RetrievalConfig(BaseModel):
     """Retrieval configuration."""
-    top_k: int = Field(default=3, description="Number of documents to retrieve")
+    model_config = ConfigDict(extra="ignore")
+    top_k: int = Field(
+        default=3, 
+        description="Number of documents to retrieve"
+    )
     similarity_threshold: float = Field(
         default=0.5,
         description="Similarity threshold for retrieval"
     )
 
+class StreamlitConfig(BaseModel):
+    """Streamlit UI configuration."""
+    host: str = Field(
+        default="0.0.0.0", 
+        description="Streamlit host"
+        )
+    port: int = Field(
+        default=8501, 
+        description="Streamlit port"
+        )
+    api_url: str = Field(
+        default="http://localhost:8000",
+        description="RAG API URL"
+    )
+
+class APIConfig(BaseModel):
+    """API configuration."""
+    host: str = Field(
+        default="0.0.0.0", 
+        description="API host"
+        )
+    port: int = Field(
+        default=8000, 
+        description="API port"
+        )
+    reload: bool = Field(
+        default=False, 
+        description="Enable auto-reload"
+        )
+    workers: int = Field(
+        default=1, 
+        description="Number of workers"
+    )
+
 class LoggingConfig(BaseModel):
     """Logging configuration."""
-    level: str = Field(default="INFO", description="Logging level")
+    model_config = ConfigDict(extra="ignore")
+    level: str = Field(
+        default="INFO", 
+        description="Logging level"
+    )
     format: str = Field(
         default="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
         description="Log format"
@@ -72,11 +143,18 @@ class Settings(BaseSettings):
     llm: LLMConfig = Field(default_factory=LLMConfig)
     document_processing: DocumentProcessingConfig = Field(default_factory=DocumentProcessingConfig)
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
+    streamlit: StreamlitConfig = Field(default_factory=StreamlitConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
-
+    api: APIConfig = Field(default_factory=APIConfig)
     # Environment
-    environment: str = Field(default="development", description="Environment name")
-    debug: bool = Field(default=False, description="Debug mode")
+    environment: str = Field(
+        default="development", 
+        description="Environment name"
+        )
+    debug: bool = Field(
+        default=False, 
+        description="Debug mode"
+        )
     
     class Config:
         env_file = ".env"
@@ -108,3 +186,10 @@ def get_settings(config_path: str = "src/config/settings.yaml") -> Settings:
         _settings = Settings(**yaml_config)
     
     return _settings
+
+
+def reload_settings(config_path: str = "src/config/settings.yaml") -> Settings:
+    """Reload settings from configuration files."""
+    global _settings
+    _settings = None
+    return get_settings(config_path)

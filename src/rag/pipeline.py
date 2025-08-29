@@ -64,12 +64,14 @@ class RAGPipeline:
                 device_map="auto",
                 max_new_tokens=self.settings.llm.max_new_tokens,
                 model_kwargs={
-                    "torch_dtype": "auto",
+                    "torch_dtype": "auto",  # Use automatic mixed precision
+                    "trust_remote_code": self.settings.llm.trust_remote_code,  # Allow custom model code
                 },
                 tokenizer_kwargs={
-                    "padding_side": "left",
-                    "truncation": True,
-                    "max_length": 512,
+                    "padding_side": "left",  # Pad on the left for causal LM
+                    "truncation": True,  # Truncate input sequences
+                    "max_length": 900,  # Leave room for generation tokens
+                    "return_overflowing_tokens": False,  # Do not return overflowing tokens
                 },
                 generate_kwargs={
                     "do_sample": True,

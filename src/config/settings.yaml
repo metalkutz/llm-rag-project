@@ -14,11 +14,12 @@ embedding:
 
 # Language Model Configuration
 llm:
-  model_name: "gpt2"
-  max_new_tokens: 64  # Much smaller to prevent repetition
+  model_name: "microsoft/Phi-3-mini-4k-instruct" #"microsoft/Phi-3-mini-4k-instruct" # google/gemma-2b-it TinyLlama/TinyLlama-1.1B-Chat-v1.0 "gpt2" "microsoft/DialoGPT-medium"
+  max_new_tokens: 64  # 256 Much smaller to prevent repetition
   temperature: 0.7
   top_p: 0.9
   device: "cpu"
+  trust_remote_code: true # Allow custom model code for phi-3
 
 # Document Processing Configuration
 document_processing:
@@ -30,3 +31,26 @@ document_processing:
 retrieval:
   top_k: 3
   similarity_threshold: 0.5
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  workers: 1
+
+# Streamlit UI Configuration
+streamlit:
+  host: "0.0.0.0"
+  port: 8501
+  api_url: "http://localhost:8000"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"
+  file: null
+
+# Environment Configuration
+environment: "development"
+debug: true
