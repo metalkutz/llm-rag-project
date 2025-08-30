@@ -1,0 +1,59 @@
+services:
+  # RAG API Service
+  rag-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    container_name: rag-microservice-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../src:/app/src
+      - ../scripts:/app/scripts
+      - ../data:/app/data
+      - ../logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - VECTOR_STORE_PERSIST_DIRECTORY=/app/data/chromadb
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - rag-network
+
+  # Streamlit UI Service
+  rag-ui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    container_name: rag-microservice-ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../streamlit:/app/streamlit
+      - ../.streamlit:/app/.streamlit
+      - ../src:/app/src
+      - ../data:/app/data
+    environment:
+      - PYTHONPATH=/app
+      - API_URL=http://rag-api:8000
+    command: streamlit run streamlit/app.py --server.address 0.0.0.0 --server.port 8501
+    depends_on:
+      rag-api:
+        condition: service_healthy
+    networks:
+      - rag-network
+
+networks:
+  rag-network:
+    driver: bridge
+
+volumes:
+  chromadb-data:
+    driver: local
