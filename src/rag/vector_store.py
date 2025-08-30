@@ -6,9 +6,7 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import chromadb
 from chromadb.config import Settings as ChromaSettings
-from chromadb.api.types import Include, IncludeEnum
 from chromadb.api.models.Collection import Collection
-from chromadb.errors import InvalidCollectionException
 from llama_index.vector_stores.chroma import ChromaVectorStore as LlamaIndexChromaVectorStore
 from llama_index.core.schema import Document, BaseNode
 from loguru import logger
@@ -57,13 +55,13 @@ class ChromaVectorStore:
                     embedding_function=None  # We'll use LlamaIndex embeddings
                 )
                 logger.info(f"Loaded existing collection: {collection_name}")
-            except InvalidCollectionException:
+            except Exception as e:
                 # Collection doesn't exist, create it
+                logger.warning(f"Could not get collection, attempting to create: {e}")
                 self.collection = self.client.create_collection(
                     name=collection_name,
                     embedding_function=None
                 )
-                logger.info(f"Created new collection: {collection_name}")
                 logger.info(f"Created new collection: {collection_name}")
             
             # Create LlamaIndex vector store wrapper
@@ -149,17 +147,6 @@ class ChromaVectorStore:
         vector_store.add([doc for doc in llama_docs if isinstance(doc, BaseNode)])
         
         logger.info(f"Added {len(llama_docs)} documents using LlamaIndex")
-    
-    def _get_include_enums(self, include_strings: List[str]) -> List[IncludeEnum]:
-        """Convert string literals to IncludeEnum values."""
-        mapping = {
-            "documents": IncludeEnum.documents,
-            "metadatas": IncludeEnum.metadatas,
-            "distances": IncludeEnum.distances,
-            "embeddings": IncludeEnum.embeddings
-        }
-        return [mapping[s] for s in include_strings]
-
 
     async def similarity_search(
         self,
@@ -173,7 +160,7 @@ class ChromaVectorStore:
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=k,
-                include=self._get_include_enums(["documents", "metadatas", "distances"])
+                include=["documents", "metadatas", "distances"] 
             )
             
             # Format results

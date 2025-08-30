@@ -41,6 +41,30 @@ class EmbeddingConfig(BaseModel):
         description="Batch size for embeddings"
         )
 
+class QuantizationConfig(BaseModel):
+    """Quantization configuration for LLM optimization."""
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = Field(
+        default=True,
+        description="Enable quantization"
+    )
+    load_in_4bit: bool = Field(
+        default=True,
+        description="Enable 4-bit quantization"
+    )
+    bnb_4bit_quant_type: str = Field(
+        default="nf4",
+        description="4-bit quantization type (nf4 or fp4)"
+    )
+    bnb_4bit_use_double_quant: bool = Field(
+        default=True,
+        description="Enable nested quantization"
+    )
+    compute_dtype: str = Field(
+        default="float16",
+        description="Computation data type"
+    )
+
 class LLMConfig(BaseModel):
     """Language model configuration."""
     model_config = ConfigDict(extra="ignore")
@@ -67,6 +91,10 @@ class LLMConfig(BaseModel):
     trust_remote_code: bool = Field(
         default=False,
         description="Allow loading remote code for custom models"
+    )
+    quantization: QuantizationConfig = Field(
+        default_factory=QuantizationConfig,
+        description="Quantization settings"
     )
 
 class DocumentProcessingConfig(BaseModel):

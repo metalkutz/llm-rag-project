@@ -23,6 +23,18 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.huggingface import HuggingFaceLLM
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import torch
+
+# Only import BitsAndBytesConfig if CUDA is available
+try:
+    if torch.cuda.is_available():
+        from transformers import BitsAndBytesConfig
+    else:
+        BitsAndBytesConfig = None
+        logger.info("CUDA not available - BitsAndBytesConfig disabled")
+except ImportError:
+    BitsAndBytesConfig = None
+    logger.warning("BitsAndBytesConfig not available - quantization disabled")
 
 from src.rag.vector_store import ChromaVectorStore
 from src.config.config import Settings
@@ -57,31 +69,128 @@ class RAGPipeline:
                 device=self.settings.embedding.device
             )
             
-            # Initialize LLM with better generation controls
-            self.llm = HuggingFaceLLM(
-                model_name=self.settings.llm.model_name,
-                tokenizer_name=self.settings.llm.model_name,
-                device_map="auto",
-                max_new_tokens=self.settings.llm.max_new_tokens,
-                model_kwargs={
-                    "torch_dtype": "auto",  # Use automatic mixed precision
-                    "trust_remote_code": self.settings.llm.trust_remote_code,  # Allow custom model code
-                },
-                tokenizer_kwargs={
-                    "padding_side": "left",  # Pad on the left for causal LM
-                    "truncation": True,  # Truncate input sequences
-                    "max_length": 900,  # Leave room for generation tokens
-                    "return_overflowing_tokens": False,  # Do not return overflowing tokens
-                },
-                generate_kwargs={
+            # Initialize LLM with optimizations for the available hardware
+            # Check hardware capabilities
+            has_cuda = torch.cuda.is_available()
+            has_mps = torch.backends.mps.is_available() if hasattr(torch.backends, 'mps') else False
+            
+            logger.info(f"Hardware detection - CUDA: {has_cuda}, MPS: {has_mps}")
+            
+            # Force CPU mode and disable quantization if no proper GPU
+            if not has_cuda:
+                logger.info("No CUDA GPU detected - using CPU-optimized configuration")
+                
+                # CPU-optimized model kwargs
+                model_kwargs: Dict[str, Any] = {
+                    "trust_remote_code": self.settings.llm.trust_remote_code,
+                    "dtype": torch.float32,  # CPU works best with float32
+                    "low_cpu_mem_usage": True,
+                    "use_cache": True,
+                }
+                
+                # CPU-optimized generation settings
+                generate_kwargs = {
+                    "do_sample": False,  # Greedy decoding is faster on CPU
+                    "pad_token_id": 50256,
+                    "use_cache": True,
+                    "num_beams": 1,  # No beam search on CPU
+                }
+                
+                device_map = "cpu"
+                logger.info("CPU configuration: float32, greedy decoding, limited tokens")
+                
+            else:
+                # GPU configuration with optional quantization
+                quantization_config = None
+                if self.settings.llm.quantization.enabled and BitsAndBytesConfig is not None:
+                    # Map string dtype to torch dtype
+                    dtype_map = {
+                        "float16": torch.float16,
+                        "bfloat16": torch.bfloat16,
+                        "float32": torch.float32
+                    }
+                    compute_dtype = dtype_map.get(
+                        self.settings.llm.quantization.compute_dtype, 
+                        torch.float16
+                    )
+                    
+                    quantization_config = BitsAndBytesConfig(
+                        load_in_4bit=self.settings.llm.quantization.load_in_4bit,
+                        bnb_4bit_quant_type=self.settings.llm.quantization.bnb_4bit_quant_type,
+                        bnb_4bit_compute_dtype=compute_dtype,
+                        bnb_4bit_use_double_quant=self.settings.llm.quantization.bnb_4bit_use_double_quant,
+                    )
+                    logger.info(f"GPU quantization enabled: {self.settings.llm.quantization.bnb_4bit_quant_type}")
+                
+                # GPU model kwargs
+                model_kwargs = {
+                    "trust_remote_code": self.settings.llm.trust_remote_code,
+                    "dtype": torch.float16,
+                    "low_cpu_mem_usage": True,
+                }
+                
+                if quantization_config is not None:
+                    model_kwargs["quantization_config"] = quantization_config
+                
+                # GPU generation settings
+                generate_kwargs = {
                     "do_sample": True,
                     "temperature": self.settings.llm.temperature,
                     "top_p": self.settings.llm.top_p,
                     "pad_token_id": 50256,
-                    "repetition_penalty": 1.2,  # Prevent repetition
-                    "early_stopping": True,
+                    "repetition_penalty": 1.2,
+                    "use_cache": True,
                 }
-            )
+                
+                device_map = "auto"
+                logger.info("GPU configuration: float16 with auto device mapping")
+            
+            # Initialize LLM with safe configuration
+            try:
+                self.llm = HuggingFaceLLM(
+                    model_name=self.settings.llm.model_name,
+                    tokenizer_name=self.settings.llm.model_name,
+                    max_new_tokens=self.settings.llm.max_new_tokens,
+                    device_map=device_map,
+                    model_kwargs=model_kwargs,
+                    tokenizer_kwargs={
+                        "padding_side": "left",
+                        "truncation": True,
+                        "max_length": 512,  # Conservative limit for CPU
+                        "return_overflowing_tokens": False,
+                        "trust_remote_code": getattr(self.settings.llm, 'trust_remote_code', True),
+                    },
+                    generate_kwargs=generate_kwargs
+                )
+                logger.info(f"LLM initialized successfully with model: {self.settings.llm.model_name}")
+                
+            except Exception as llm_error:
+                logger.error(f"Failed to initialize LLM: {llm_error}")
+                # Fallback to a smaller, CPU-friendly model
+                logger.info("Attempting fallback to CPU-friendly model...")
+                
+                fallback_model = "microsoft/DialoGPT-small"
+                self.llm = HuggingFaceLLM(
+                    model_name=fallback_model,
+                    tokenizer_name=fallback_model,
+                    device_map="cpu",
+                    max_new_tokens=50,
+                    model_kwargs={
+                        "dtype": torch.float32,
+                        "low_cpu_mem_usage": True,
+                    },
+                    tokenizer_kwargs={
+                        "padding_side": "left",
+                        "truncation": True,
+                        "max_length": 256,
+                    },
+                    generate_kwargs={
+                        "do_sample": False,
+                        "pad_token_id": 50256,
+                        "use_cache": True,
+                    }
+                )
+                logger.info(f"Fallback LLM initialized: {fallback_model}")
             
             # Set global LlamaIndex settings
             LlamaIndexSettings.embed_model = self.embed_model

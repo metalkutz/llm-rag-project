@@ -14,12 +14,19 @@ embedding:
 
 # Language Model Configuration
 llm:
-  model_name: "microsoft/Phi-3-mini-4k-instruct" #"microsoft/Phi-3-mini-4k-instruct" # google/gemma-2b-it TinyLlama/TinyLlama-1.1B-Chat-v1.0 "gpt2" "microsoft/DialoGPT-medium"
+  model_name: google/gemma-2-2b-it #"microsoft/Phi-3-mini-4k-instruct" # google/gemma-2-2b-it TinyLlama/TinyLlama-1.1B-Chat-v1.0 "gpt2" "microsoft/DialoGPT-medium"
   max_new_tokens: 64  # 256 Much smaller to prevent repetition
   temperature: 0.7
   top_p: 0.9
   device: "cpu"
   trust_remote_code: true # Allow custom model code for phi-3
+  # Quantization settings for performance optimization
+  quantization:
+    enabled: false  # Disable for CPU usage - quantization is mainly for GPU
+    load_in_4bit: true
+    bnb_4bit_quant_type: "nf4"  # normalized float 4-bit quantization
+    bnb_4bit_use_double_quant: true  # nested quantization
+    compute_dtype: "float16"  # computation data type
 
 # Document Processing Configuration
 document_processing:
