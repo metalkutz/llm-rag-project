@@ -237,7 +237,7 @@ temp/
 .dockerignore
 
 # Streamlit
-.streamlit/
+#.streamlit/
 
 # ChromaDB specific
 chroma.sqlite3
