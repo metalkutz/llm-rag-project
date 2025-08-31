@@ -1,4 +1,4 @@
-# Development Dockerfile for RAG Microservice
+# Production Dockerfile for RAG Microservice
 FROM python:3.12-slim
 
 # Set environment variables
@@ -13,20 +13,18 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files (for development, we'll use volumes)
+# Copy project files
 COPY src/ ./src/
 COPY scripts/ ./scripts/
-COPY streamlit/ ./streamlit/
 COPY data/ ./data/
-COPY .env ./ 
-COPY docker/start-dev.sh /app/start.sh
+COPY .env.example ./
+COPY docker/start-prod.sh /app/start.sh
 
 # Setup startup script
 RUN chmod +x /app/start.sh
@@ -34,11 +32,15 @@ RUN chmod +x /app/start.sh
 # Create necessary directories
 RUN mkdir -p data/chromadb logs
 
-# Expose ports
-EXPOSE 8000 8501
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Use the startup script as entrypoint
 ENTRYPOINT ["/app/start.sh"]
 
-# For development, we'll override this with docker-compose
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run the application
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
