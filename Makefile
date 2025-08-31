@@ -87,3 +87,7 @@ docker-clean-prod: ## Clean up production Docker resources
 
 docker-clean: docker-clean-dev docker-clean-prod ## Clean up all Docker resources
 	docker system prune -f
+
+# Quickstart 
+quickstart: install setup-data up-dev ## Full setup and run in development mode
+	@echo "✅ Quickstart completed! Access the UI at http://localhost:8501"

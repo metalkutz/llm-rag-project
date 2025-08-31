@@ -72,7 +72,8 @@ async def test_chromadb_create_new_collection(mock_settings):
         mock_client.return_value = mock_client_instance
         
         # Simulate collection not existing - use ChromaDB's actual exception
-        from chromadb.errors import InvalidCollectionException
+        class InvalidCollectionException(Exception):
+            pass
         mock_client_instance.get_collection.side_effect = InvalidCollectionException("Collection not found")
         
         mock_collection = MagicMock()
