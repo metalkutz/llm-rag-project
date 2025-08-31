@@ -1,7 +1,10 @@
 # Makefile for RAG Microservice
 .PHONY: install download-data init-db ingest-data setup-data 
 .PHONY: test test_vector_store 
-.PHONY: run-api run-ui run-dev build up down logs-api logs-ui docker-clean
+.PHONY: run-api run-ui run-dev 
+.PHONY: build-dev build-prod up-dev up-prod down-dev down-prod
+.PHONY: logs-dev logs-prod-api logs-prod-ui logs-prod-chromadb
+.PHONY: docker-clean docker-clean-dev docker-clean-prod
 
 # Installation and Setup
 install: ## Install Python dependencies
@@ -44,21 +47,43 @@ run-dev: ## Run both API and UI in development mode
 	wait
 
 # Docker Operations
-build: ## Build the Docker image
+build-dev: ## Build the development Docker image
 	docker build -f docker/Dockerfile.dev -t rag-microservice:dev .
 
-up: ## Start the Docker containers
-	docker-compose up
+build-prod: ## Build the production Docker image
+	docker build -f docker/Dockerfile -t rag-microservice:prod .
 
-down: ## Stop the Docker containers
-	docker-compose down
+up-dev: ## Start development Docker containers
+	cd docker && docker compose -f docker-compose.dev.yml up -d
 
-logs-api: ## View API logs
-	docker-compose -f docker/docker-compose.yml logs -f rag-api
+up-prod: ## Start production Docker containers
+	cd docker && docker compose -f docker-compose.yml up -d
 
-logs-ui: ## View UI logs
-	docker-compose -f docker/docker-compose.yml logs -f rag-ui
+down-dev: ## Stop development Docker containers
+	cd docker && docker compose -f docker-compose.dev.yml down
 
-docker-clean: ## Clean up Docker resources
-	docker-compose -f docker/docker-compose.yml down -v
+down-prod: ## Stop production Docker containers
+	cd docker && docker compose -f docker-compose.yml down
+
+logs-dev: ## View development container logs
+	cd docker && docker compose -f docker-compose.dev.yml logs -f
+
+logs-prod-api: ## View production API logs
+	cd docker && docker compose -f docker-compose.yml logs -f rag-api
+
+logs-prod-ui: ## View production UI logs
+	cd docker && docker compose -f docker-compose.yml logs -f rag-ui
+
+logs-prod-chromadb: ## View production ChromaDB logs
+	cd docker && docker compose -f docker-compose.yml logs -f chromadb
+
+docker-clean-dev: ## Clean up development Docker resources
+	cd docker && docker compose -f docker-compose.dev.yml down -v
+	docker image rm rag-microservice:dev 2>/dev/null || true
+
+docker-clean-prod: ## Clean up production Docker resources
+	cd docker && docker compose -f docker-compose.yml down -v
+	docker image rm rag-microservice:prod 2>/dev/null || true
+
+docker-clean: docker-clean-dev docker-clean-prod ## Clean up all Docker resources
 	docker system prune -f

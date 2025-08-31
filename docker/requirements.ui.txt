@@ -1,0 +1,14 @@
+# Lightweight requirements for UI service only
+# Core UI dependencies
+streamlit==1.29.0
+streamlit-chat==0.1.1
+
+# HTTP client for API communication
+requests>=2.31.0
+
+# Basic utilities
+loguru>=0.7.2
+python-dotenv>=1.0.0
+
+# Configuration
+pyyaml>=6.0.1

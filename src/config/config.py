@@ -174,6 +174,13 @@ class Settings(BaseSettings):
     streamlit: StreamlitConfig = Field(default_factory=StreamlitConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     api: APIConfig = Field(default_factory=APIConfig)
+    
+    # Authentication
+    huggingface_token: Optional[str] = Field(
+        default=None,
+        description="Hugging Face authentication token"
+    )
+    
     # Environment
     environment: str = Field(
         default="development", 

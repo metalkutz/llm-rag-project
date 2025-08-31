@@ -21,13 +21,26 @@ st.set_page_config(
 )
 
 def get_api_base_url() -> str:
-    """Get API base URL from secrets or environment variables."""
+    """Get API base URL from environment variables or secrets."""
+    # First try environment variable (works better in containers)
+    api_url = os.getenv("API_URL")
+    if api_url:
+        return api_url
+    
+    # Fallback to Streamlit secrets if available
     try:
-        # Try to get from Streamlit secrets first
         return st.secrets.get("API_URL", "http://localhost:8000")
-    except (FileNotFoundError, AttributeError):
-        # Fallback to environment variable or default
-        return os.getenv("API_URL", "http://localhost:8000")
+    except (FileNotFoundError, AttributeError, KeyError, Exception):
+        # Final fallback
+        return "http://localhost:8000"
+
+
+def get_timeout_config() -> Dict[str, int]:
+    """Get timeout configuration from environment or defaults."""
+    return {
+        "health_timeout": int(os.getenv("HEALTH_TIMEOUT", "15")),
+        "query_timeout": int(os.getenv("QUERY_TIMEOUT", "180"))
+    }
 
 # Constants
 def get_endpoints():
@@ -43,7 +56,8 @@ def check_api_health() -> Dict[str, Any]:
     """Check if the RAG API is healthy."""
     try:
         endpoints = get_endpoints()
-        response = requests.get(endpoints["health"], timeout=5)
+        timeouts = get_timeout_config()
+        response = requests.get(endpoints["health"], timeout=timeouts["health_timeout"])
         if response.status_code == 200:
             return {
                 "status": "healthy",
@@ -65,6 +79,7 @@ def query_rag_api(query: str, max_sources: int = 3) -> Dict[str, Any]:
     """Query the RAG API."""
     try:
         endpoints = get_endpoints()
+        timeouts = get_timeout_config()
         payload = {
             "query": query,
             "max_sources": max_sources,
@@ -74,7 +89,7 @@ def query_rag_api(query: str, max_sources: int = 3) -> Dict[str, Any]:
         response = requests.post(
             endpoints["query"],
             json=payload,
-            timeout=30
+            timeout=timeouts["query_timeout"]  # Configurable timeout for LLM responses
         )
         
         if response.status_code == 200:
@@ -168,6 +183,13 @@ def main():
             help="Maximum number of source documents to retrieve"
         )
         
+        # Add timeout information
+        timeouts = get_timeout_config()
+        st.info(f"⏱️ **Response Times:**\n"
+                f"- Health check: {timeouts['health_timeout']}s timeout\n"
+                f"- LLM queries: {timeouts['query_timeout']}s timeout\n"
+                f"- Expect 1-5 minutes for responses on CPU")
+        
         st.header("📊 Statistics")
         st.write(f"**Queries asked:** {st.session_state.query_count}")
         st.write(f"**Messages:** {len(st.session_state.messages)}")
@@ -200,7 +222,7 @@ def main():
         
         # Get response from RAG API
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner("🤖 Processing your question... This may take up to 5 minutes for complex queries."):
                 result = query_rag_api(prompt, max_sources)
                 
                 if result["success"]:

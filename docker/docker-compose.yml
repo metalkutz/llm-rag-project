@@ -33,18 +33,14 @@ services:
   rag-ui:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.ui.prod
     container_name: rag-microservice-ui
     ports:
       - "8501:8501"
-    secrets:
-      - huggingface_token
-    volumes:
-      - ../data:/app/data
     environment:
       - PYTHONPATH=/app
       - API_URL=http://rag-api:8000
-    command: ["streamlit", "run", "streamlit/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+    command: ["streamlit", "run", "streamlit/app.py", "--server.address", "0.0.0.0", "--server.port", "8501", "--server.headless", "true"]
     depends_on:
       rag-api:
         condition: service_healthy
@@ -63,6 +59,8 @@ services:
     environment:
       - CHROMA_SERVER_HOST=0.0.0.0
       - CHROMA_SERVER_PORT=8000
+      - HEALTH_TIMEOUT=30
+      - QUERY_TIMEOUT=300
     networks:
       - rag-network
     restart: unless-stopped
